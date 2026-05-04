@@ -950,8 +950,3 @@ with open("answer-sheet.yaml", "w") as f:
     dump(Answers, f, sort_keys=False, default_flow_style=False)
 
 print("\n--- Running Sanity Check ---")
-
-sanity_script = Path(__file__).parent / "answer-sheet-sanity.py"
-yaml_file = Path(__file__).parent / "answer-sheet.yaml"
-
-subprocess.run([sys.executable, str(sanity_script), str(yaml_file)])

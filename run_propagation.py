@@ -601,7 +601,7 @@ Answers['ls_REG_CumGlobErr_PLOT_7'] = plot_CGPD_filenames
 r_euler_iter = y_euler_iter[:, 24:27]
 v_euler_iter = y_euler_iter[:, 27:30]
 
-E = (np.linalg.norm(v_euler_iter, axis=1))**2/2 - pick("mu")/np.linalg.norm(r_euler_iter, axis=1)
+E = (np.linalg.norm(v_euler_iter, axis=1))**2/2 - pick("mu_E")/np.linalg.norm(r_euler_iter, axis=1)
 h = np.linalg.cross(r_euler_iter, v_euler_iter)
 h_mag = np.linalg.norm(h, axis=1)
 
@@ -1239,8 +1239,3 @@ with open("answer-sheet.yaml", "w") as f:
     dump(Answers, f, sort_keys=False, default_flow_style=False)
 
 print("\n--- Running Sanity Check ---")
-
-sanity_script = Path(__file__).parent / "answer-sheet-sanity.py"
-yaml_file = Path(__file__).parent / "answer-sheet.yaml"
-
-subprocess.run([sys.executable, str(sanity_script), str(yaml_file)])

@@ -7,15 +7,32 @@ debug: False
 TLE: "TLE_data.txt"
 skip_plots: False
 
-
 # Parameters
 N: 100
 ti: 0
 rev: 2.5
+rev_GPD: 3
+rev_euler: 3
+rev_RK4: 3
+rev_GPD_alt: 3
+
+N_euler: 1000
+N_RK4: 1000
+N_GPD_exp_min: 2
+N_GPD_exp_max: 4
+N_GPD_length: 5
+N_CGPD_exp_max: 4
+N_CGPD_length: 10
+N_GPD_exp_min_alt: 2
+N_GPD_exp_max_alt: 4
+N_GPD_length_alt: 2
+N_CGPD_exp_min_alt: 2
+N_CGPD_exp_max_alt: 4
+N_CGPD_length_alt: 10
 
 opt_max_iter: 100
 
-
+mu: 398600.4418
 mu_E: 398600.4418
 mu_S: 132712440041.93938
 mu_M: 4902.800066
@@ -26,7 +43,6 @@ J_2: 0.001083
 
 initial_date: '2025-12-29'
 final_date: '2025-12-30'
-
 
 # SRP
 rad_press_ball_coeff: 0.02  # m^2/kg

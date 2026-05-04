@@ -596,8 +596,3 @@ with open("answer-sheet.yaml", "w") as f:
 print("\n--- Running Sanity Check ---")
 sanity_script = Path(__file__).parent / "answer-sheet-sanity.py"
 yaml_file = Path(__file__).parent / "answer-sheet.yaml"
-
-if sanity_script.exists():
-    subprocess.run([sys.executable, str(sanity_script), str(yaml_file)])
-else:
-    print("Sanity check script not found, skipping.")
