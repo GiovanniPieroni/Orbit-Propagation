@@ -18,7 +18,7 @@ This project implements a software suite for satellite orbit propagation, valida
 *   **State Vector Optimization**: Implementation of **Grid Search** and **Gradient-based** algorithms to minimize the Cumulative Global Position Difference (CGPD) between numerical models and SGP4 data.
 
 ### 2. Interplanetary Transfer Design: Asteroid 1991VH Mission and Earth-Venus transfer
-*Language: MATLAB*
+*Language: MATLAB, Python (TudatPy)*
 
 A detailed study on designing optimal orbital maneuvers for a mission from a Geostationary Transfer Orbit (GTO) to a parking orbit around asteroid 1991VH.
 
@@ -83,4 +83,5 @@ Each project directory contains its own configuration and entry-point scripts:
 
 ---
 *Projects developed as part of advanced Astrodynamics and Interplanetary Mission Design curricula at TU Delft.*
-\* Interplanetary transfer to Asteroid 1991VH was made in collaboration with Alessandro Ponti 
+
+\* Interplanetary transfer to Asteroid 1991VH was made in collaboration with Alessandro Ponti (@PontiAle)
