@@ -1,0 +1,8 @@
+# Active task
+task: "q3"
+
+# Debug mode flag
+debug: False
+
+# If True, PostProcessing will only generate plots from existing data without re-running simulations
+only_plotting: False

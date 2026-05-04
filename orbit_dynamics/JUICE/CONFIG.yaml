@@ -1,0 +1,9 @@
+# Active task
+task: "question1"
+
+
+# Debug=?
+debug: False
+
+# Only plotting?
+only_plotting: False

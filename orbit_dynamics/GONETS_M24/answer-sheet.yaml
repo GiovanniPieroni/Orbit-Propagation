@@ -1,0 +1,466 @@
+ss_REG_Language_GEN_0: Python
+ls_MDT_TLE_GEN_0:
+- GONETS-M 24
+- 1 54151U 22139B   25337.46568562  .00000027  00000+0  12117-3 0  9998
+- 2 54151  82.4961 109.1218 0015671 298.4429  61.5071 12.42859793141330
+ls_MDT_OrbKepRes_SRC_0:
+- modules/errors.py
+ss_REG_OrbKepRes_CODE_2: "def kep_el_and_residuals(state_u, time_u,\n            \
+  \             state_d, time_d,\n                         label_u, ylabel_u,\n  \
+  \                       label_d, ylabel_d,\n                         label_diff,\
+  \ ylabel_diff,\n                         fig_title, fig_name, plot=True):\n    #\
+  \ Retrieve Keplerian elements\n    if not np.array_equal(time_u, time_d):\n    \
+  \    raise RuntimeError(\"The two orbits have different time domains, residuals\
+  \ cannot be computed.\")\n    a_u, e_u, _, i_u, _, Om_u, _, om_u, _, th_u, u_u =\
+  \ cartesian_to_keplerian(state_u)\n    a_d, e_d, _, i_d, _, Om_d, _, om_d, _, th_d,\
+  \ u_d = cartesian_to_keplerian(state_d)\n    da = a_d - a_u\n    de = e_d - e_u\n\
+  \    di = i_d - i_u\n    dOm = Om_d - Om_u\n    dom = om_d - om_u\n    dth = th_d\
+  \ - th_u\n    du = u_d - u_u\n    # kep_el_u = np.column_stack((a_u, e_u, i_u, Om_u,\
+  \ om_u, th_u, u_u))\n    # kep_el_d = np.column_stack((a_d, e_d, i_d, Om_d, om_d,\
+  \ th_d, u_d))\n    #\n    # kep_el_diff = np.column_stack((da, de, di, dOm, dom,\
+  \ dth, du))\n    kep_el_u = np.column_stack((a_u, e_u, i_u, Om_u, u_u))\n    kep_el_d\
+  \ = np.column_stack((a_d, e_d, i_d, Om_d, u_d))\n    kep_el_diff = np.column_stack((da,\
+  \ de, di, dOm, du))\n    generated_files = []\n\n    if plot:\n        for i in\
+  \ range(5):\n            # Extract data\n            u_data = kep_el_u[:, i]\n \
+  \           d_data = kep_el_d[:, i]\n            diff_data = kep_el_diff[:, i]\n\
+  \n            # Handle Angle Wrapping for Omega (idx 3) and omega (idx 4)\n    \
+  \        if i in [3, 4]:\n                u_data = mask_discontinuity(u_data)\n\
+  \                d_data = mask_discontinuity(d_data)\n                # diff data\
+  \ usually doesn't need masking if it's small residuals,\n                # but if\
+  \ it jumps due to wrapping, we might need it.\n                # For residuals,\
+  \ we usually don't wrap them to 0-360, they are small deltas.\n                #\
+  \ diff_data = mask_discontinuity(diff_data)\n\n            # Handle filename list\
+  \ or single pattern\n            # If 'filename' is a list, pick i-th. If string,\
+  \ append _i\n            fname = fig_name[i] if isinstance(fig_name, list) else\
+  \ f\"{fig_name}_{i}.png\"\n            tit = fig_title[i] if isinstance(fig_title,\
+  \ list) else f\"{fig_title} - Element {i}\"\n\n            # Call the plotter\n\
+  \            out = plot_comparison_residual(\n                time_u,\n        \
+  \        u_data, label_u[i],\n                d_data, label_d[i],\n            \
+  \    diff_data, label_diff[i],\n                ylabel_u[i], ylabel_diff[i],  #\
+  \ Main Y-label matches the elements\n                title=tit,\n              \
+  \  filename=fname\n            )\n            # generated_files.append(out)\n\n\
+  \    return kep_el_u, kep_el_d, kep_el_diff\n\n\ndef plot_comparison_residual(time,\n\
+  \                             data_u, label_u,\n                             data_d,\
+  \ label_d,\n                             data_diff, label_diff,\n              \
+  \               ylabel_main, ylabel_diff,\n                             title=\"\
+  Comparison\", filename=\"comp_plot.png\"):\n    \"\"\"\n    Plots Disturbed and\
+  \ Undisturbed on Left Axis, Residual on Right Axis.\n    \"\"\"\n    # --- Setup\
+  \ & Figure Size ---\n    max_time = np.nanmax(np.array(time)) if len(time) > 0 else\
+  \ 0\n    orbital_lines = []\n\n    # Calculate lines\n    if period is not None\
+  \ and max_time > period:\n        orbital_lines = np.arange(period, max_time + 1,\
+  \ period, dtype=float)\n        fig, ax1 = plt.subplots(figsize=(8 + len(orbital_lines),\
+  \ 8))\n    else:\n        fig, ax1 = plt.subplots(figsize=(8, 7))\n\n    fig.subplots_adjust(top=0.82)\n\
+  \n    # Colors matching plot_three_scales\n    color_u = 'tab:blue'\n    color_d\
+  \ = 'tab:green'\n    color_diff = 'tab:orange'  # Changed to orange to match 3rd\
+  \ axis of plot_three_scales\n\n    # --- Axis 1 (Left) - Main Values (Unperturbed\
+  \ & Perturbed) ---\n    # Plot Undisturbed\n    l1, = ax1.plot(time, data_u, color=color_u,\
+  \ label=label_u, linestyle='--', linewidth=5, alpha=1)\n    # Plot Disturbed\n \
+  \   l2, = ax1.plot(time, data_d, color=color_d, label=label_d, linestyle='-', linewidth=7,\
+  \ alpha=0.5)\n\n    ax1.set_xlabel(\"Time [s]\", fontsize=LABEL_SIZE)\n    ax1.set_ylabel(ylabel_main,\
+  \ fontsize=LABEL_SIZE)\n    ax1.tick_params(axis='y', labelsize=TICK_SIZE)\n   \
+  \ ax1.tick_params(axis='x', labelsize=TICK_SIZE)\n    ax1.grid(True, which='major',\
+  \ linestyle=':', alpha=0.6)\n\n    # Move Scientific Notation (Offset Text) FAR\
+  \ LEFT\n    ax1.yaxis.get_offset_text().set_horizontalalignment('right')\n    ax1.yaxis.get_offset_text().set_position((-0.15,\
+  \ 1.0))\n    ax1.xaxis.set_minor_locator(mticker.AutoMinorLocator())\n    ax1.yaxis.set_minor_locator(mticker.AutoMinorLocator())\n\
+  \n    # --- Axis 2 (Right) - Residual ---\n    ax2 = ax1.twinx()\n    l3, = ax2.plot(time,\
+  \ data_diff, color=color_diff, label=label_diff, linestyle='-.', linewidth=6)\n\n\
+  \    ax2.set_ylabel(ylabel_diff, color=color_diff, fontsize=LABEL_SIZE)\n    ax2.tick_params(axis='y',\
+  \ labelcolor=color_diff, labelsize=TICK_SIZE)\n\n    # Configure Right Axis (Scientific\
+  \ notation if needed)\n    formatter = mticker.ScalarFormatter(useMathText=True)\n\
+  \    formatter.set_powerlimits((-3, 2))\n    ax2.yaxis.set_major_formatter(formatter)\n\
+  \    ax2.yaxis.get_offset_text().set_x(1.1)\n    ax2.yaxis.set_minor_locator(mticker.AutoMinorLocator())\n\
+  \n    # --- Orbital Period Lines ---\n    if 'period' in globals() and period is\
+  \ not None and len(orbital_lines) > 0:\n        for lx in orbital_lines:\n     \
+  \       ax1.axvline(lx, color='black', linestyle='-.', alpha=0.4, zorder=0)\n  \
+  \          ax1.text(lx, 1.02, f\"{int(lx / period)} T \u2248 {int(period * (lx /\
+  \ period))} [s]\",\n                     transform=ax1.get_xaxis_transform(),\n\
+  \                     ha='center', va='bottom', fontsize=12, color='gray')\n\n \
+  \   # --- Legend & Title ---\n    lines = [l1, l2, l3]\n    labels = [l.get_label()\
+  \ for l in lines]\n\n    # --- ADD ORBITAL PERIOD LABEL ---\n    lines.append(Line2D([0],\
+  \ [0], color='none', label='1T = one orbital period'))\n    labels.append('1T =\
+  \ one orbital period')\n\n    # Legend at Top\n    ax1.legend(lines, labels, loc='lower\
+  \ center', bbox_to_anchor=(0.5, 1.05),\n               ncol=2, borderaxespad=0.,\
+  \ frameon=True, fontsize=LEGEND_SIZE)\n\n    ax1.set_title(title, y=1.18, fontsize=TITLE_SIZE)\n\
+  \n    # --- Save ---\n    try:\n        fig.savefig(filename, bbox_inches=\"tight\"\
+  )\n    except ValueError:\n        print(f\"Warning: Infinite data detected in {filename}.\
+  \ Saving without 'tight' layout.\")\n        fig.savefig(filename)\n\n    plt.close(fig)\n\
+  \    return str(filename)\n"
+ls_MDT_MagPlot_SRC_0:
+- modules/errors.py
+ss_REG_MagPlot_CODE_1: "def mag_dist(acc_v: np.ndarray):\n    \"\"\"\n    :param acc_v:\
+  \ Time series of acceleration\n    :return: magnitude of acceleration vector\n \
+  \   \"\"\"\n    # ensure exactly one dimension is 3\n    if 3 not in acc_v.shape:\n\
+  \        raise ValueError(\"Input must have one dimension equal to 3\")\n\n    #\
+  \ orient as (N, 3)\n    if acc_v.shape[1] == 3:\n        v2 = acc_v\n    else: \
+  \ # shape must be (3, N)\n        v2 = acc_v.T\n\n    return np.linalg.norm(v2,\
+  \ axis=1)\n\n\ndef plot_mag_acc(time: np.ndarray, acc_v: np.ndarray, xlabel: str,\
+  \ ylabel: str, label_str: str,\n                 title=\"Generic title\", filename=\"\
+  Generic_filename.png\"):\n    \"\"\"\n    Args:\n        :param filename:\n    \
+  \    :param title:\n        :param label_str:\n        :param ylabel:\n        :param\
+  \ xlabel:\n        :param acc_v:\n        :param time:\n    :returns: str(filename)\n\
+  \    \"\"\"\n    # --- 3. Figure Setup ---\n    max_time = np.nanmax(time)\n   \
+  \ orbital_lines = []\n    # Calculate lines\n    if period is not None and max_time\
+  \ > period:\n        orbital_lines = np.arange(period, max_time + 1, period, dtype=float)\n\
+  \        fig, ax = plt.subplots(figsize=(8 + len(orbital_lines), 8))  # Increased\
+  \ height for legend\n    else:\n        fig, ax = plt.subplots(figsize=(8, 7)) \
+  \ # Increased height\n\n    fig.subplots_adjust(top=0.82)  # Room for legend\n\n\
+  \    acc = errors.mag_dist(acc_v)\n\n    plt.plot(time, acc, linewidth=2, label=label_str)\
+  \  # Added label here for legend\n\n    plt.xlabel(xlabel, fontsize=LABEL_SIZE)\n\
+  \    plt.ylabel(ylabel, fontsize=LABEL_SIZE)\n    ax.set_title(title, fontsize=TITLE_SIZE,\
+  \ y=1.20)\n    plt.grid(True, linestyle=':', alpha=0.6)\n\n    ax.tick_params(labelsize=TICK_SIZE)\n\
+  \    # Turn on minor ticks\n    ax.xaxis.set_minor_locator(mticker.AutoMinorLocator())\n\
+  \    ax.yaxis.set_minor_locator(mticker.AutoMinorLocator())\n    # ax.legend(loc='best',\
+  \ fontsize=LEGEND_SIZE)\n\n    # --- Orbital Period Lines ---\n    if 'period' in\
+  \ globals() and period is not None and len(orbital_lines) > 0:\n        for lx in\
+  \ orbital_lines:\n            ax.axvline(lx, color='black', linestyle='-.', alpha=0.3,\
+  \ zorder=0)\n            ax.text(lx, 1.05, f\"{int(lx / period)} T \u2248 {int(lx)}\
+  \ s\",\n                    transform=ax.get_xaxis_transform(),\n              \
+  \      ha='center', va='bottom', fontsize=12, color='gray')\n\n    # --- ADD ORBITAL\
+  \ PERIOD LABEL ---\n    handles, labels = ax.get_legend_handles_labels()\n    handles.append(Line2D([0],\
+  \ [0], color='none', label='1T = one orbital period'))\n    labels.append('1T =\
+  \ one orbital period')\n\n    # Legend ABOVE axis\n    ax.legend(handles, labels,\
+  \ loc='lower center', bbox_to_anchor=(0.5, 1.08),\n              ncol=2, fontsize=LEGEND_SIZE)\n\
+  \n    plt.tight_layout()\n    plt.savefig(filename, dpi=300, bbox_inches=\"tight\"\
+  )\n    plt.close(fig)\n    return str(filename)\n"
+sf_MDT_OrbTimeIni_NUM_0: 0
+sf_MDT_OrbTimeEnd_NUM_0: 17379.27328702313
+sf_MDT_OrbTimeStep_NUM_0: 173.7927328702313
+lf_REG_OrbPosIni_NUM_0:
+- -2577859.719109277
+- 7435265.51341482
+- -3.123549945845856
+lf_REG_OrbVelIni_NUM_0:
+- -879.1973737043529
+- -301.5383850659152
+- 7060.035430389268
+lf_REG_OrbPosEnd_NUM_1:
+- 2556162.484506895
+- -7454763.807258015
+- 73435.23731489386
+lf_REG_OrbVelEnd_NUM_1:
+- 898.2638417212481
+- 241.78479324171806
+- -7049.264748594051
+ss_MDT_Integrator_GEN_0: Runge-Kutta 4
+lf_REG_IntPosIni_NUM_0:
+- -2577859.719109277
+- 7435265.51341482
+- -3.123549945845856
+lf_REG_IntVelIni_NUM_0:
+- -879.1973737043529
+- -301.5383850659152
+- 7060.035430389268
+lf_REG_IntPosEnd_NUM_0.85:
+- 2565757.0598020423
+- -7456298.827546278
+- 139195.80963985526
+lf_REG_IntVelEnd_NUM_0.85:
+- 916.5765073745404
+- 187.06715441971645
+- -7043.465364906153
+ls_REG_OrbKepPlotFile_PLOT_1:
+- plots/a_e_i_SGP4.png
+- plots/u_RAAN_SGP4.png
+ls_REG_EulerKepPlotFile_PLOT_1:
+- plots/a_e_i_RK4.png
+- plots/u_RAAN_RK4.png
+ls_MDT_J2_SRC_0:
+- modules/disturbances.py
+ss_REG_J2_CODE_2.5: "def j2_acc(r):\n    # Parameters:\n    mu_earth = pick(\"mu_E\"\
+  )\n    R_earth = pick(\"R_E\")\n    J2 = pick(\"J_2\")\n\n    x, y, z = r\n    r_norm\
+  \ = np.linalg.norm(r)\n    a_x = -3 / 2 * mu_earth * J2 * R_earth ** 2 / r_norm\
+  \ ** 5 * x * (1 - 5 * z ** 2 / r_norm ** 2)\n    a_y = -3 / 2 * mu_earth * J2 *\
+  \ R_earth ** 2 / r_norm ** 5 * y * (1 - 5 * z ** 2 / r_norm ** 2)\n    a_z = -3\
+  \ / 2 * mu_earth * J2 * R_earth ** 2 / r_norm ** 5 * z * (3 - 5 * z ** 2 / r_norm\
+  \ ** 2)\n    a = np.array([a_x, a_y, a_z])\n\n    return a\n"
+lf_REG_J2PosIni_NUM_0:
+- -2577859.719109277
+- 7435265.51341482
+- -3.123549945845856
+lf_REG_J2VelIni_NUM_0:
+- -879.1973737043529
+- -301.5383850659152
+- 7060.035430389268
+lf_REG_J2PosEnd_NUM_0.85:
+- 2556675.821480677
+- -7454219.07721341
+- 68426.3572270836
+lf_REG_J2VelEnd_NUM_0.85:
+- 896.8023616770533
+- 246.13050454874852
+- -7049.505482706381
+ls_REG_J2Mag_PLOT_2:
+- plots/a_mag_J2.png
+ls_REG_J2Orb_PLOT_5:
+- plots/a_J2.png
+- plots/e_J2.png
+- plots/i_J2.png
+- plots/RAAN_J2.png
+- plots/u_J2.png
+- plots/a_e_i_res_J2_SGP4.png
+- plots/RAAN_u_res_J2_SGP4.png
+ss_REG_J2Obs_OIC_6: " (I will refer to the orbit propagated with the SGP4 model as\
+  \ 'SGP4 orbit' and to the orbit integrated including the J2 perturbation as 'J2-perturbed\
+  \ orbit')\n| \n- O1: Plot \"a_e_i_res_J2_SGP4.png\" shows the residuals in semi-major\
+  \ axis, eccentricity and inclination between the SGP4 \nand the J2-perturbed orbits.\
+  \ \u0394a oscillates and reaches a maximum amplitude of about 0.056 km, while \u0394\
+  e and \u0394i remain of \nthe order of 1e-5, although \u0394i shows an increasing\
+  \ oscillation amplitude. In the plot \"a_e_i_RK4.png\", the mean values \nof these\
+  \ Keplerian elements (respectively a, e, and i) are approximately 7878 km, 6.56e-4,\
+  \ and 82.5 deg.\n- O2: Plot \"a_J2.png\" shows that the semi-major axis of the J2-perturbed\
+  \ orbit oscillates between approximately\n7862.5 and 7877.5 km, with a maximum separation\
+  \ of approximately 16 km with respect to the unperturbed orbit, \nreached twice\
+  \ every orbital period.\n- O3: Plot \"a_mag_J2.png\" shows that the magnitude of\
+  \ the acceleration due to the J2 perturbation follows a periodic \npattern with\
+  \ values bounded between approximately 6 and 13 mm/s^2; two local maxima around\
+  \ 13 mm/s^2 occur per orbital period.\n"
+ss_REG_J2Int_OIC_8: "|\n- I1: From O1, the residuals between the SGP4 and the J2-perturbed\
+  \ orbits are small compared to the absolute values \nof the corresponding orbital\
+  \ elements because, over the considered time span, for the Keplerian elements analysed,\
+  \ and \nfor this orbit, the perturbation due to J2 represents a dominant contribution\
+  \ included in the SGP4 propagation model.\n- I2: From O2 and O3, the semi-major\
+  \ axis of the orbit perturbed by J2 oscillates periodically because the flattening\
+  \ \nof the Earth introduces a latitude-dependent gravitational potential. Specifically,\
+  \ this causes alternating increases and \ndecreases in the force (and hence velocity,\
+  \ orbital energy) experienced by the satellite. The semi-major axis follows \nthe\
+  \ resulting variation in orbital energy, leading to two extrema per orbital period.\n"
+ss_REG_J2Con_OIC_10: "|\nFor short integration periods and first-order analyses, adding\
+  \ the J2 perturbation to the gravitational point-mass \nmodel yields values for\
+  \ the semi-major axis, eccentricity, and inclination that are comparable to those\
+  \ obtained \nthrough SGP4 propagation. Additionally, the J2 perturbation causes\
+  \ short-period variations in orbital energy, \nbut not secular variations. \n"
+lf_REG_SunPos_NUM_0.9:
+- -10404877286.049791
+- -134733045217.81502
+- -58404772435.36754
+ls_MDT_SRP_SRC_0:
+- modules/disturbances.py
+ss_REG_SRP_CODE_2.5: "def srp_acc(r_e_sat, r_e_sun):\n    \"\"\"\n    3x1 SRP acceleration\
+  \ for ODE integration (single state vector).\n    Includes correct umbra/penumbra\
+  \ model and correct night-side condition.\n    Returns acceleration in km/s^2.\n\
+  \    \"\"\"\n\n    # Convert to meters\n    r_sat = r_e_sat * 1e3\n    r_sun = r_e_sun\
+  \ * 1e3\n\n    R_earth = pick(\"R_E\") * 1e3\n    R_sun   = pick(\"R_S\") * 1e3\n\
+  \n    B_R = pick(\"rad_press_ball_coeff\")\n    P   = pick(\"flux\") / pick(\"light_speed\"\
+  )\n\n    # Vector Sun \u2192 satellite\n    r_sun_sat = r_sat - r_sun\n    norm_sun_sat\
+  \ = np.linalg.norm(r_sun_sat)\n    e_sun_sat = r_sun_sat / norm_sun_sat\n\n    #\
+  \ PROJECTION OF r_sat onto Sun\u2192sat direction\n    proj_scalar = np.dot(r_sat,\
+  \ e_sun_sat)\n    r_ps = proj_scalar * e_sun_sat\n\n    # Distance from shadow axis\n\
+  \    r_e_p = r_sat - r_ps\n    h_g = np.linalg.norm(r_e_p) - R_earth\n\n    # Penumbra\
+  \ radius\n    R_p = (np.linalg.norm(r_ps) / norm_sun_sat) * R_sun\n\n    eta = h_g\
+  \ / R_p\n\n    # --- CORRECT NIGHT-SIDE CONDITION ---\n    sun_dir = r_sun / np.linalg.norm(r_sun)\
+  \     # Earth \u2192 Sun\n    proj_day = np.dot(r_sat, sun_dir)\n    night = proj_day\
+  \ < 0                        # True if behind Earth\n\n    # Atmospheric attenuation\n\
+  \    f_a = 1.0\n\n    # Default acceleration (no SRP)\n    a = np.zeros(3)\n\n \
+  \   # UMBRA\n    if eta < -1 and night:\n        a[:] = 0\n\n    # PENUMBRA\n  \
+  \  elif -1 <= eta < 1 and night:\n        f_g = 1 - (1/np.pi)*np.arccos(eta) + (eta/np.pi)*np.sqrt(1\
+  \ - eta**2)\n        a[:] = -f_g * f_a * B_R * P * e_sun_sat\n\n    # FULL ILLUMINATION\
+  \ (night side but Earth does not block)\n    elif eta >= 1 and night:\n        a[:]\
+  \ = -B_R * P * e_sun_sat\n\n    # DAY SIDE (always full illumination)\n    else:\n\
+  \        a[:] = -B_R * P * e_sun_sat\n\n    return a / 1e3   # convert to km/s^2\n"
+lf_REG_SRPPosIni_NUM_0:
+- -2577859.719109277
+- 7435265.51341482
+- -3.123549945845856
+lf_REG_SRPVelIni_NUM_0:
+- -879.1973737043529
+- -301.5383850659152
+- 7060.035430389268
+lf_REG_SRPPosEnd_NUM_0.85:
+- 2565756.8474655347
+- -7456298.44078279
+- 139196.35087232382
+lf_REG_SRPVelEnd_NUM_0.85:
+- 916.5770744836923
+- 187.06523685469344
+- -7043.465870641151
+ls_REG_SRPMag_PLOT_2:
+- plots/a_mag_SRP.png
+ls_REG_SRPOrb_PLOT_5:
+- plots/a_SRP.png
+- plots/e_SRP.png
+- plots/i_SRP.png
+- plots/RAAN_SRP.png
+- plots/u_SRP.png
+- plots/GPD_SRP_U.png
+- plots/a_e_i_res_SRP_U.png
+- plots/specific_energy_SRP.png
+ss_REG_SRPObs_OIC_6: " (I will refer to the orbit integrated including the SRP perturbation\
+  \ as 'SRP-perturbed orbit')\n|\n- O1: Plot \"a_mag_SRP.png\" shows that the magnitude\
+  \ of the acceleration due to solar radiation pressure forms a rectangular\n  wave\
+  \ pattern, with values alternating between a maximum of about 9e-5 mm/s^2 and zero.\
+  \ Over each orbital period,\n  the acceleration is non-zero for most of the time\
+  \ interval. \n- O2: Plot \"a_e_i_res_SRP_U.png\" shows the residuals in semi-major\
+  \ axis, eccentricity and inclination between the\n  unperturbed orbit and the SRP-perturbed\
+  \ orbit. \u0394e shows a negative piecewise drift with values of order 1e-7, while\
+  \ \u0394i shows\n  a positive piecewise drift with values of order 1e-6 deg. \u0394\
+  a exhibits a near-periodic pattern with no visible drift, reaching a\n  maximum\
+  \ amplitude of approximately 35 cm every orbital period. In all cases, intervals\
+  \ of nearly constant residuals \n  alternate with intervals of non-constant residuals.\n\
+  - O3: Plot \"specific_energy_SRP.png\" shows that the specific energy of the perturbed\
+  \ orbit alternates between intervals where\n  it is constant and intervals where\
+  \ it is non-constant. During the non-constant intervals, the specific energy increases\
+  \ to a\n  maximum value (less negative), with variations of order 1e-6 km^2/s^2,\
+  \ and returns to the minimum plateau. No secular drift is visible. \n"
+ss_REG_SRPInt_OIC_8: "|\n- I1: From O1 and O2, the acceleration trend causes the residuals\
+  \ to exhibit piecewise behaviour because, when the \n  perturbation due to SRP is\
+  \ zero, the orbital dynamics are governed only by the point-mass gravitational model,\
+  \ and \n  the Keplerian elements therefore remain practically constant.\n- I2: From\
+  \ O2 and O3, the semi-major axis exhibits bounded, near-periodic variations because\
+  \ the specific orbital \n  energy varies periodically without a secular drift over\
+  \ the considered time interval, and the two quantities are\n  directly related through\
+  \ \u03B5 = \u2212\u03BC/(2a).\n"
+ss_REG_SRPCon_OIC_10: "|\n- The inclusion of the perturbation due to SRP, although\
+  \ the associated force is\n  non-conservative, introduces secular drifts only in\
+  \ eccentricity and inclination (between the analyzed Keplerian\n  elements). Instead,\
+  \ for the considered time interval (only a few orbital periods) it produces short-period\
+  \ variations\n  in the orbital energy, which remains bounded.\n"
+sf_AEX_RefHeight_GEN_0.1: 1500000
+sf_AEX_ScaleHeight_GEN_0.1: 516000
+sf_AEX_MeanRho_GEN_0.1: 2.79e-16
+ls_AEX_Drag_SRC_0.1:
+- modules/disturbances.py
+ss_AEX_Drag_CODE_0.8: "def drag_acc(r, v):\n    # 3x1 acceleration due to drag, including\
+  \ rotating atmosphere\n\n    # v is given in ECI => We need to remove Earth rotation\
+  \ (assuming atmosphere fixed to it)\n    w_e = pick(\"w_E\")\n    w_e_vec = np.array([0,\
+  \ 0, w_e])\n    v_a = v - np.linalg.cross(w_e_vec, r)  # type: ignore\n    B = pick(\"\
+  ball_coeff\")\n    rho_mean = pick(\"ref_rho\")\n    v_a_norm = np.linalg.norm(v_a)\n\
+  \    h = np.linalg.norm(r) - pick(\"R_E\")\n    rho = np.exp(-h/pick(\"scale_height\"\
+  )) * rho_mean\n    a = - 1 / 2 * rho * B * v_a_norm * v_a\n\n    return a\n"
+lf_AEX_DragPosIni_NUM_0:
+- -2577859.719109277
+- 7435265.51341482
+- -3.123549945845856
+lf_AEX_DragVelIni_NUM_0:
+- -879.1973737043529
+- -301.5383850659152
+- 7060.035430389268
+lf_AEX_DragPosEnd_NUM_0.2:
+- 2565757.059805089
+- -7456298.827542983
+- 139195.80960977645
+lf_AEX_DragVelEnd_NUM_0.2:
+- 916.5765073657494
+- 187.06715444588062
+- -7043.465364907812
+ls_AEX_DragOrb_PLOT_1:
+- plots/a_Drag.png
+- plots/e_Drag.png
+- plots/i_Drag.png
+- plots/RAAN_Drag.png
+- plots/u_Drag.png
+ls_AEX_DragMag_PLOT_0.5:
+- plots/a_mag_Drag.png
+ss_AEX_DragObs_OIC_1: "|\n- O1: Plot \"a_mag_Drag.png\" shows that the magnitude of\
+  \ drag acceleration oscillates periodically between ~6.90\xD710^-8 and\n ~6.96\xD7\
+  10^-8 mm/s^2, repeating approximately the same pattern over multiple orbits.\n-\
+  \ O2: Plots \"a_Drag.png\" and \"u_Drag.png\" show that the residual \u0394a_d-u\
+  \ decreases over time and reaches ~(-5)\xD710^-9 km \n  at the end of integration,\
+  \ while \u0394u_d-u increases over time and reaches ~9\xD710^-10 deg.\n- O3: Plots\
+  \ \"i_Drag.png\" and \"RAAN_Drag.png\" show that i_u and i_d are practically coincident\
+  \ and \u0394i_d-u drops to \n  ~(-8)\xD710^-13 deg; also RAAN_u and RAAN_d are visibly\
+  \ coincident and \u0394RAAN_d-u remains confined about within \n  \xB16\xD710^-14\
+  \ deg with no clear trend.\n"
+ss_AEX_DragInt_OIC_2: "|\n- I1: From O1, the periodic oscillation of |a_drag| is consistent\
+  \ with the dependence of the drag on \u03C1(h) and |v_rel|^2; along\n  the orbit\
+  \ these terms oscillate and thus the magnitude of the perturbation also varies with\
+  \ approximately orbital periodicity.\n- I2: From O2 and O3, the fact that drift\
+  \ is observed on a and u, but not on i and RAAN, is consistent with a perturbation\n\
+  \  mainly in-plane (or along-track): it reduces the orbital energy (decrease in\
+  \ a, E becomes more negative) and cumulatively\n  changes the orbital phase (growth\
+  \ of \u0394u), while producing a negligible contribution on the orbital plane.\n"
+ss_AEX_DragCon_OIC_4: "|\n- For relatively short integration periods (between two\
+  \ and seven orbital periods), atmospheric-drag perturbations tend to be most\n \
+  \ apparent in in-plane quantities, while out-of-plane quantities remain negligible\
+  \ unless the spacecraft\n  aerodynamics introduce a sustained out-of-plane component\
+  \ (e.g., non-spherical shape or attitude-dependent lift). For a spherical satellite\n\
+  \  with purely drag-like acceleration, orbital plane variations are therefore expected\
+  \ to stay near to machine precision \n  values.\n"
+lf_AEX_MoonPos_NUM_0.1:
+- -182002804.2697523
+- -317622200.3235988
+- -175811139.6194424
+ls_AEX_TBP_SRC_0.1:
+- modules/disturbances.py
+ss_AEX_TBP_CODE_0.8: "def tbp_acc(r, r_sun, r_moon):\n    # 3x1 acceleration due to\
+  \ Sun+Moon\n\n    mu_s = pick(\"mu_S\")\n    mu_m = pick(\"mu_M\")\n\n    x, y,\
+  \ z = r\n    x_s, y_s, z_s = r_sun\n    x_m, y_m, z_m = r_moon\n\n    # i = satellite,\
+  \ k = Earth, m = Moon, s = Sun\n    r_is = np.sqrt((x_s - x) ** 2 + (y_s - y) **\
+  \ 2 + (z_s - z) ** 2)\n    r_ks = np.sqrt(x_s ** 2 + y_s ** 2 + z_s ** 2)\n\n  \
+  \  r_im = np.sqrt((x_m - x) ** 2 + (y_m - y) ** 2 + (z_m - z) ** 2)\n    r_km =\
+  \ np.sqrt(x_m ** 2 + y_m ** 2 + z_m ** 2)\n\n    # We consider both the perturbation\
+  \ of the Moon and of the Sun\n    ax_s = mu_s * ((x_s - x) / r_is ** 3 - x_s / r_ks\
+  \ ** 3)\n    ay_s = mu_s * ((y_s - y) / r_is ** 3 - y_s / r_ks ** 3)\n    az_s =\
+  \ mu_s * ((z_s - z) / r_is ** 3 - z_s / r_ks ** 3)\n\n    ax_m = mu_m * ((x_m -\
+  \ x) / r_im ** 3 - x_m / r_km ** 3)\n    ay_m = mu_m * ((y_m - y) / r_im ** 3 -\
+  \ y_m / r_km ** 3)\n    az_m = mu_m * ((z_m - z) / r_im ** 3 - z_m / r_km ** 3)\n\
+  \n    a = np.array([ax_s + ax_m, ay_s + ay_m, az_s + az_m])\n\n    return a\n"
+lf_AEX_TBPPosIni_NUM_0:
+- -2577859.719109277
+- 7435265.51341482
+- -3.123549945845856
+lf_AEX_TBPVelIni_NUM_0:
+- -879.1973737043529
+- -301.5383850659152
+- 7060.035430389268
+lf_AEX_TBPPosEnd_NUM_0.2:
+- 2565763.425587456
+- -7456294.588855356
+- 139183.1994049544
+lf_AEX_TBPVelEnd_NUM_0.2:
+- 916.5633695802984
+- 187.07759270718262
+- -7043.468740363061
+ls_AEX_TBPMag_PLOT_0.5:
+- plots/a_mag_TBP.png
+ls_AEX_TBPOrb_PLOT_1:
+- plots/a_TBP.png
+- plots/e_TBP.png
+- plots/i_TBP.png
+- plots/RAAN_TBP.png
+- plots/u_TBP.png
+- plots/GPD_TBP_SunMoonDist.png
+- plots/a_TBP_RSW.png
+ss_AEX_TBPObs_OIC_1: "|\n- O1: Plot \"a_mag_TBP.png\" shows that |a_TBP| varies periodically\
+  \ between about 9e-4 and ~1.5e-3 mm/s^2; during each \n  orbital period, two local\
+  \ maxima and minima are present.\n- O2: Plot \"a_TBP_RSW.png\" shows that the Radial,\
+  \ Along-track and Cross-track components have different dominant periods:\n  a_W\
+  \ completes about one cycle per orbit, while a_R and a_S complete about two cycles\
+  \ per orbit.\n- O3: Plot \"GPD_TBP_SunMoonDist.png\" shows that GPD_{d-u} increases\
+  \ to about 35 m after five orbital periods,\n  with oscillations superimposed; in\
+  \ the same plot, |r_{m-sat}| and |r_{s-sat}| reach their local maxima/minima approximately\
+  \ at the\n  same times (their oscillations are nearly in phase).\n"
+ss_AEX_TBPInt_OIC_2: "|\n- I1: From O3, the non-zero final GPD indicates that the\
+  \ third-body perturbation does not result in a purely periodic\n  displacement that\
+  \ cancels after each revolution. Even though gravity is conservative, the third-body\
+  \ term modifies the\n  satellite\u2019s trajectory relative to the two-body (Earth-only)\
+  \ reference, so small orbit-to-orbit mismatches accumulate\n  over time, producing\
+  \ a growing separation with superimposed short-period oscillations.\n- I2: From\
+  \ O1 and O2, the ~2-per-orbit pattern in |a_TBP| and in the in-plane components\
+  \ (a_R and a_S) is caused by\n  the tidal nature of third-body gravity: the perturbation\
+  \ depends on the satellite\u2019s alignment with the Earth\u2013third-body\n  direction\
+  \ and is strongest when the satellite is approximately collinear with that direction\
+  \ (both on the near side and\n  on the far side), and weakest near quadrature. This\
+  \ geometry repeats every half orbit, which yields two extrema per\n  orbital period;\
+  \ in addition, the radial projection can keep the same sign in both collinear configurations\
+  \ because both\n  the tidal acceleration and the radial unit vector reverse together\
+  \ on opposite sides of the orbit.\n"
+ss_AEX_TBPCon_OIC_4: "|\n- For short periods of integration, and assuming a constant\
+  \ position of the third body, the disturbance is approximately \n  a static tidal\
+  \ field; in that regime, the dominant short-period signature in the orbital-plane\
+  \ components typically\n  repeats every half orbit (i.e., has a twice-per-orbit\
+  \ harmonic), while the out-of-plane component is typically \n  dominated by a 1-per-orbit\
+  \ term.\n"
+ss_CEX_Explain_GEN_10: "|\n- Developed a robust TLE caching and retrieval system with\
+  \ fallback logic, local storage, NORAD/name matching, \nmalformed-response handling,\
+  \ and incremental caching.\n- The code is structured in files with functions for\
+  \ specific or general tasks.\n- Vectorised the CartoKep and KeptoCar transformation,\
+  \ eliminating loops.\n- Built reusable plotting functions including matrix-based\
+  \ plotting and generic plotting interfaces.\n- Implemented a layered configuration\
+  \ system (DEFAULTS -> CONFIG.yaml -> CLI arguments) with the `pick()` \nselector.\n"
+ss_MDT_AI_GEN_0: "|\nI used AI to get help with the syntax, the libraries and the\
+  \ yaml file generation. Also, \nplotting functions and secondary functions have\
+  \ been refined by AI for better clarity.\n"
+sf_REG_WORKLOAD_GEN_0: 25
+ss_REG_FEEDBACK_GEN_0: "|\nAssignment useful to explore the different perturbations\
+  \ and their effects, although the analysis is limited to a certain range of orbits.\
+  \ \n"
